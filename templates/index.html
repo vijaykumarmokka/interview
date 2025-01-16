@@ -15,8 +15,11 @@
 
             try {
                 const response = await fetch("/process", { method: "POST" });
-                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(`Server Error: ${response.status} - ${response.statusText}`);
+                }
 
+                const data = await response.json();
                 if (data.success) {
                     const cleanAnswer = data.answer.replace(/\*/g, ""); // Remove unwanted '*'
                     showPopup(`You said: ${data.text}\n\nInterview Response:\n${cleanAnswer}`);
@@ -24,7 +27,7 @@
                     showPopup(`Error: ${data.error}`);
                 }
             } catch (error) {
-                showPopup(`An unexpected error occurred: ${error}`);
+                showPopup(`An unexpected error occurred: ${error.message}`);
             } finally {
                 button.disabled = false;
                 button.innerText = "Start Listening";
@@ -70,7 +73,6 @@
         }
     </script>
     <style>
-        /* General styles */
         body {
             font-family: Arial, sans-serif;
             text-align: center;
@@ -103,10 +105,10 @@
             bottom: 20px;
             right: 20px;
             display: flex;
-            flex-direction: column-reverse; /* Newest popup at the bottom */
+            flex-direction: column-reverse;
             gap: 10px;
-            max-height: 80vh; /* Prevent the wrapper from exceeding 80% of the viewport height */
-            overflow-y: auto; /* Make the container scrollable if needed */
+            max-height: 80vh;
+            overflow-y: auto;
             z-index: 1000;
         }
 
@@ -117,15 +119,12 @@
             border-radius: 10px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
             max-width: 400px;
-            width: 90%; /* Make responsive for smaller screens */
-            overflow: hidden;
+            width: 90%;
         }
 
         .popup-content {
             font-size: 14px;
             color: #333;
-            overflow-y: auto;
-            max-height: 200px; /* Limit the height of each popup */
         }
 
         .close-btn {
@@ -140,22 +139,6 @@
 
         .close-btn:hover {
             background-color: #d32f2f;
-        }
-
-        @media (max-width: 600px) {
-            .popup {
-                max-width: 100%; /* Full width on small screens */
-                border-radius: 8px;
-            }
-
-            .popup-content {
-                font-size: 12px;
-            }
-
-            .close-btn {
-                font-size: 12px;
-                padding: 6px 10px;
-            }
         }
     </style>
 </head>
