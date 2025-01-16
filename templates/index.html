@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interview Speech Assistant</title>
+    <script>
+        const popupContainer = [];
+
+        // Function to handle speech processing
+        async function processSpeech() {
+            const button = document.getElementById("start-btn");
+            button.disabled = true;
+            button.innerText = "Listening continuously...";
+
+            try {
+                const response = await fetch("/process", { method: "POST" });
+                const data = await response.json();
+
+                if (data.success) {
+                    const cleanAnswer = data.answer.replace(/\*/g, ""); // Remove unwanted '*'
+                    showPopup(`You said: ${data.text}\n\nInterview Response:\n${cleanAnswer}`);
+                } else {
+                    showPopup(`Error: ${data.error}`);
+                }
+            } catch (error) {
+                showPopup(`An unexpected error occurred: ${error}`);
+            } finally {
+                button.disabled = false;
+                button.innerText = "Start Listening";
+            }
+        }
+
+        // Function to display popups
+        function showPopup(message) {
+            const popupWrapper = document.getElementById("popup-wrapper") || createPopupWrapper();
+
+            const popup = document.createElement("div");
+            popup.className = "popup";
+            popup.innerHTML = `
+                <div class="popup-content">
+                    ${message}
+                </div>
+                <button class="close-btn" onclick="removePopup(this)">Close</button>
+            `;
+
+            popupWrapper.appendChild(popup);
+            popupContainer.push(popup);
+
+            if (popupContainer.length > 3) {
+                const oldestPopup = popupContainer.shift();
+                oldestPopup.remove();
+            }
+        }
+
+        // Function to create a wrapper for popups
+        function createPopupWrapper() {
+            const wrapper = document.createElement("div");
+            wrapper.id = "popup-wrapper";
+            document.body.appendChild(wrapper);
+            return wrapper;
+        }
+
+        // Function to remove a popup
+        function removePopup(button) {
+            const popup = button.parentElement;
+            popup.remove();
+            const index = popupContainer.indexOf(popup);
+            if (index > -1) popupContainer.splice(index, 1);
+        }
+    </script>
+    <style>
+        /* General styles */
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        button:disabled {
+            background-color: #9E9E9E;
+            cursor: not-allowed;
+        }
+
+        #popup-wrapper {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column-reverse; /* Newest popup at the bottom */
+            gap: 10px;
+            max-height: 80vh; /* Prevent the wrapper from exceeding 80% of the viewport height */
+            overflow-y: auto; /* Make the container scrollable if needed */
+            z-index: 1000;
+        }
+
+        .popup {
+            background: white;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+            width: 90%; /* Make responsive for smaller screens */
+            overflow: hidden;
+        }
+
+        .popup-content {
+            font-size: 14px;
+            color: #333;
+            overflow-y: auto;
+            max-height: 200px; /* Limit the height of each popup */
+        }
+
+        .close-btn {
+            margin-top: 10px;
+            padding: 8px 12px;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .close-btn:hover {
+            background-color: #d32f2f;
+        }
+
+        @media (max-width: 600px) {
+            .popup {
+                max-width: 100%; /* Full width on small screens */
+                border-radius: 8px;
+            }
+
+            .popup-content {
+                font-size: 12px;
+            }
+
+            .close-btn {
+                font-size: 12px;
+                padding: 6px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Interview Speech Assistant</h1>
+    <button id="start-btn" onclick="processSpeech()">Start Listening</button>
+</body>
+</html>
